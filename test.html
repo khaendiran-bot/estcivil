@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>CIVIL  | แพลตฟอร์มโยธา</title>
+
+<link rel="icon" type="image/gif" href="https://media1.giphy.com/media/L8A2CLpJJW5d3NR5Tt/200w.gif" />
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #00f3ff;
+            --secondary: #bc13fe;
+            --accent: #ff0055;
+            --dark: #050505;
+            --glass: rgba(255, 255, 255, 0.05);
+            --neon-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+        }
+
+        * { box-sizing: border-box; font-family: 'Kanit', sans-serif; }
+        body { margin: 0; background: var(--dark); color: white; overflow-x: hidden; }
+
+        /* --- Rainbow Fireflies --- */
+        #canvas-bg { position: fixed; top: 0; left: 0; z-index: -1; pointer-events: none; }
+
+        /* --- Neon Glassmorphism UI --- */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: var(--neon-shadow);
+        }
+
+        /* --- Login Page --- */
+        .auth-wrapper {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url('https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjs-gU8U0VuPIMBOiE_TwbkJnBZy_BOU29YePLUju3BHAw2zOy6OKo02tzLWtUVU9dVHxvK60P45qQidmCIp4O_p1yj92su93ilhQYnb2fH6lK6OaPx5SdWaH3fag3vkcAT8Qs3aBMklCI/s1600/4.gif') center/cover;
+        }
+
+        .auth-box {
+            width: 400px; padding: 40px; text-align: center;
+            border-top: 4px solid var(--primary);
+        }
+
+        .auth-box img.logo-gif { width: 120px; border-radius: 50%; border: 3px solid var(--primary); margin-bottom: 20px; }
+
+        input, select {
+            width: 100%; padding: 12px; margin: 10px 0;
+            background: rgba(0,0,0,0.5); border: 1px solid var(--primary);
+            color: white; border-radius: 10px;
+        }
+
+        .btn-neon {
+            width: 100%; padding: 12px; border: none; border-radius: 10px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white; font-weight: bold; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .btn-neon:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--primary); }
+
+        /* --- Dashboard --- */
+        #main-app { display: none; }
+        
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 30px; background: rgba(0,0,0,0.8);
+            border-bottom: 2px solid var(--secondary);
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .nav-logo { font-size: 24px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .nav-logo img { width: 40px; }
+
+        .sidebar {
+            width: 80px; height: 100vh; position: fixed; left: 0;
+            display: flex; flex-direction: column; align-items: center;
+            padding-top: 20px; gap: 25px; background: var(--glass);
+        }
+
+        .side-icon {
+            font-size: 20px; color: #888; cursor: pointer; transition: 0.3s;
+            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+            border-radius: 12px;
+        }
+
+        .side-icon:hover, .side-icon.active { color: var(--primary); background: rgba(0, 243, 255, 0.1); }
+
+        .content-area { margin-left: 90px; padding: 30px; display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+
+        /* --- Post System --- */
+        .post-input-box { margin-bottom: 20px; padding: 20px; }
+        .post-card { background: rgba(255,255,255,0.03); margin-bottom: 15px; padding: 15px; border-radius: 15px; border-left: 5px solid var(--primary); }
+        .post-media img { width: 100%; border-radius: 10px; margin-top: 10px; }
+
+        /* --- RC Calculator --- */
+        .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        /* --- Admin Panel --- */
+        #admin-panel { display: none; border: 2px solid var(--accent); }
+
+        /* --- Real-time Chat --- */
+        #chat-window { height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; margin-bottom: 10px; }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas-bg"></canvas>
+
+    <div id="auth-page">
+        <div class="auth-wrapper">
+            <div id="login-form" class="auth-box glass-card">
+                <img src="https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/715aa783-66ac-4d8b-8959-f7fc390e1956/dgb3b1j-a3569238-2cca-4032-92de-dc50fc40407a.gif?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiIvZi83MTVhYTc4My02NmFjLTRkOGItODk1OS1mN2ZjMzkwZTE5NTYvZGdiM2Ixai1hMzU2OTIzOC0yY2NhLTQwMzItOTJkZS1kYzUwZmM0MDQwN2EuZ2lmIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.a6BnrisVyTL063r3eOI7zm-YcOMVIb9C8EwgbsJhObc" class="logo-gif">
+                <h2>CIVIL LOGIN</h2>
+                <input type="text" id="user-id" placeholder="รหัสประจำตัว / Username">
+                <input type="password" id="user-pw" placeholder="Password">
+                <button class="btn-neon" onclick="handleAuth()">GO TO SYSTEM</button>
+                <p onclick="toggleReg()" style="cursor:pointer; font-size:12px; margin-top:10px;">ยังไม่มีบัญชี? สมัครที่นี่</p>
+            </div>
+
+            <div id="reg-form" class="auth-box glass-card hidden">
+                <h2>REGISTER</h2>
+                <input type="text" id="reg-name" placeholder="ชื่อ-นามสกุล">
+                <input type="text" id="reg-user" placeholder="ตั้งชื่อผู้ใช้">
+                <input type="password" id="reg-pass" placeholder="ตั้งรหัสผ่าน">
+                <select id="reg-level">
+                    <option value="ปวช. 1">ปวช. 1</option>
+                    <option value="ปวช. 2">ปวช. 2</option>
+                    <option value="ปวช. 3">ปวช. 3</option>
+                    <option value="ปวส. 1">ปวส. 1</option>
+                    <option value="ปวส. 2">ปวส. 2</option>
+                    <option value="ครู/อาจารย์">ครู / อาจารย์</option>
+                </select>
+                <button class="btn-neon" onclick="submitRegister()">CREATE ACCOUNT</button>
+                <p onclick="toggleReg()" style="cursor:pointer; font-size:12px; margin-top:10px;">กลับไปหน้าล็อคอิน</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <nav class="navbar">
+            <div class="nav-logo">
+                <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiUmB77tBktgvpsofuQbtdQeIQMDBNu9MW2s7Z6IKH5X2DZ-7xNSJShndEOKwQW23v47u-mavWTELvXneuZuPOkPkp0tdrPmMJVT50OMDkKsqaPjpW8Py6OoO0NZfjuB-066tONbbX5F0ch/w200-h200/ChineseGhost8.gif">
+                CIVIL ULTIMATE HUB
+            </div>
+            <div id="user-status"></div>
+            <button class="btn-neon" style="width:auto; padding:5px 20px;" onclick="location.reload()">LOGOUT</button>
+        </nav>
+
+        <div class="sidebar glass-card">
+            <div class="side-icon active" onclick="showPage('feed-page')"><i class="fas fa-home"></i></div>
+            <div class="side-icon" onclick="showPage('calc-page')"><i class="fas fa-calculator"></i></div>
+            <div class="side-icon" onclick="showPage('profile-page')"><i class="fas fa-user-edit"></i></div>
+            <div class="side-icon" onclick="showPage('admin-page')" id="admin-icon"><i class="fas fa-user-shield"></i></div>
+        </div>
+
+        <div class="content-area">
+            <div id="feed-page" class="page">
+                <div class="post-input-box glass-card">
+                    <textarea id="post-text" placeholder="มีคำถามโยธา หรืออัปเดตงานอะไรไหม..." style="width:100%; height:80px; background:none; color:white; border:none;"></textarea>
+                    <input type="file" id="post-file" accept="image/*,video/*">
+                    <button class="btn-neon" style="margin-top:10px;" onclick="createPost()">POST</button>
+                </div>
+                <div id="feed-container"></div>
+            </div>
+
+            <div id="calc-page" class="page hidden">
+                <div class="glass-card" style="padding:20px;">
+                    <h3><i class="fas fa-cubes"></i> RC Beam Design (คำนวณหน้าตัดคาน)</h3>
+                    <div class="calc-grid">
+                        <input type="number" id="beam-w" placeholder="Width b (mm)">
+                        <input type="number" id="beam-h" placeholder="Depth h (mm)">
+                        <input type="number" id="beam-m" placeholder="Moment Mu (kg-m)">
+                        <input type="number" id="beam-fc" placeholder="fc' (ksc)">
+                    </div>
+                    <button class="btn-neon" onclick="calculateRC()">CALCULATE & EXPORT PDF</button>
+                    <div id="calc-result" style="margin-top:20px; color:var(--primary);"></div>
+                    <div id="3d-viewer" style="width:100%; height:200px; margin-top:20px; border-radius:10px;"></div>
+                </div>
+            </div>
+
+            <div id="profile-page" class="page hidden">
+                <div class="glass-card" style="padding:20px; text-align:center;">
+                    <img id="my-avatar" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" style="width:120px; border-radius:50%; border:2px solid var(--secondary);">
+                    <input type="text" id="edit-name" placeholder="ชื่อ-นามสกุล">
+                    <input type="text" id="edit-avatar-url" placeholder="Link รูปโปรไฟล์ (GIF/JPG)">
+                    <input type="text" id="edit-fb" placeholder="Facebook Link">
+                    <input type="text" id="edit-ig" placeholder="Instagram Link">
+                    <button class="btn-neon" onclick="saveProfile()">SAVE PROFILE</button>
+                </div>
+            </div>
+
+            <div id="admin-page" class="page hidden">
+                <div class="glass-card" style="padding:20px;">
+                    <h3>👑 Admin Console</h3>
+                    <div id="user-list-admin"></div>
+                    <hr>
+                    <h4>Manage Content</h4>
+                    <button class="btn-neon" style="background:var(--accent);" onclick="clearAllPosts()">CLEAR ALL POSTS</button>
+                </div>
+            </div>
+
+            <div class="sidebar-right">
+                <div class="glass-card" style="padding:15px; margin-bottom:15px;">
+                    <h4><i class="fas fa-comments"></i> แชทกลุ่มโยธา</h4>
+                    <div id="chat-window"></div>
+                    <input type="text" id="chat-input" placeholder="พิมพ์ข้อความ...">
+                </div>
+                <div class="glass-card" style="padding:15px;">
+                    <h4><i class="fas fa-book"></i> สูตรด่วน</h4>
+                    <ul style="font-size:12px; color:#aaa;">
+                        <li>Concrete Vol: W x L x H</li>
+                        <li>Weight Steel: D² / 162</li>
+                        <li>Moment: (wL²)/8</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Rainbow Fireflies System ---
+        const canvas = document.getElementById('canvas-bg');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        let particles = [];
+        class Particle {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.size = Math.random() * 5 + 1;
+                this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                this.vX = (Math.random() - 0.5) * 3;
+                this.vY = (Math.random() - 0.5) * 3;
+            }
+            update() { 
+                this.x += this.vX; this.y += this.vY; 
+                if(this.size > 0.1) this.size -= 0.05; 
+            }
+            draw() {
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color; ctx.shadowBlur = 10; ctx.shadowColor = this.color; ctx.fill();
+            }
+        }
+        window.addEventListener('mousemove', (e) => {
+            for(let i=0; i<3; i++) particles.push(new Particle(e.x, e.y));
+        });
+        function animate() {
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            particles.forEach((p, i) => { 
+                p.update(); p.draw(); 
+                if(p.size <= 0.1) particles.splice(i, 1);
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // --- 2. Auth & User System ---
+        let currentUser = null;
+        const ADMIN_USER = "admin04";
+        const ADMIN_PASS = "admin044";
+
+        function toggleReg() {
+            document.getElementById('login-form').classList.toggle('hidden');
+            document.getElementById('reg-form').classList.toggle('hidden');
+        }
+
+        function submitRegister() {
+            const user = {
+                id: document.getElementById('reg-user').value,
+                pw: document.getElementById('reg-pass').value,
+                name: document.getElementById('reg-name').value,
+                level: document.getElementById('reg-level').value,
+                avatar: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+                role: 'student'
+            };
+            localStorage.setItem('user_' + user.id, JSON.stringify(user));
+            alert("สมัครสมาชิกสำเร็จ!");
+            toggleReg();
+        }
+
+        function handleAuth() {
+            const id = document.getElementById('user-id').value;
+            const pw = document.getElementById('user-pw').value;
+
+            // Admin Logic
+            if(id === ADMIN_USER && pw === ADMIN_PASS) {
+                currentUser = { name: "SUPER ADMIN", role: "admin", level: "All Control", id: "admin" };
+                startApp();
+                return;
+            }
+
+            const stored = localStorage.getItem('user_' + id);
+            if(stored) {
+                const user = JSON.parse(stored);
+                if(user.pw === pw) {
+                    currentUser = user;
+                    startApp();
+                } else { alert("รหัสผ่านผิด!"); }
+            } else { alert("ไม่พบผู้ใช้งาน!"); }
+        }
+
+        function startApp() {
+            document.getElementById('auth-page').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            document.getElementById('user-status').innerHTML = `ยินดีต้อนรับ: ${currentUser.name} (${currentUser.level})`;
+            if(currentUser.role !== 'admin') document.getElementById('admin-icon').style.display = 'none';
+            loadPosts();
+            init3D();
+        }
+
+        // --- 3. Page Navigation ---
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            document.getElementById(pageId).classList.remove('hidden');
+            document.querySelectorAll('.side-icon').forEach(i => i.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        // --- 4. Post & Social System ---
+        function createPost() {
+            const text = document.getElementById('post-text').value;
+            const fileInput = document.getElementById('post-file');
+            if(!text) return;
+
+            const posts = JSON.parse(localStorage.getItem('civil_posts') || '[]');
+            const newPost = {
+                author: currentUser.name,
+                content: text,
+                time: new Date().toLocaleString(),
+                img: fileInput.files[0] ? URL.createObjectURL(fileInput.files[0]) : null
+            };
+            posts.unshift(newPost);
+            localStorage.setItem('civil_posts', JSON.stringify(posts));
+            document.getElementById('post-text').value = "";
+            loadPosts();
+        }
+
+        function loadPosts() {
+            const posts = JSON.parse(localStorage.getItem('civil_posts') || '[]');
+            const container = document.getElementById('feed-container');
+            container.innerHTML = posts.map(p => `
+                <div class="post-card glass-card">
+                    <small style="color:var(--secondary)">${p.author} • ${p.time}</small>
+                    <p>${p.content}</p>
+                    ${p.img ? `<img src="${p.img}" style="width:100%; border-radius:10px;">` : ''}
+                </div>
+            `).join('');
+        }
+
+        // --- 5. Civil Engineering RC Calculator ---
+        function calculateRC() {
+            const b = document.getElementById('beam-w').value;
+            const h = document.getElementById('beam-h').value;
+            const mu = document.getElementById('beam-m').value;
+            
+            // สูตรเบื้องต้น (Simplified RC Design)
+            const d = h - 50; 
+            const as = (mu * 100) / (0.9 * 4000 * 0.9 * d); // ตัวอย่างการคำนวณเหล็กเสริม
+
+            const resultStr = `หน้าตัดคาน ${b}x${h} mm. ต้องใช้เหล็กเสริม As ≈ ${as.toFixed(2)} cm²`;
+            document.getElementById('calc-result').innerText = resultStr;
+
+            // 3D Animation Update (Three.js)
+            update3DBeam(b/10, h/10);
+
+            // Export PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Civil Engineering Report", 10, 10);
+            doc.text(`Beam Design: ${resultStr}`, 10, 20);
+            doc.save("Civil-Report.pdf");
+        }
+
+        // --- 6. Three.js 3D Beam Viewer ---
+        let scene, camera, renderer, beam;
+        function init3D() {
+            const container = document.getElementById('3d-viewer');
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            const geometry = new THREE.BoxGeometry(2, 0.5, 0.5);
+            const material = new THREE.MeshPhongMaterial({ color: 0x00f3ff, wireframe: true });
+            beam = new THREE.Mesh(geometry, material);
+            scene.add(beam);
+
+            const light = new THREE.PointLight(0xffffff, 1, 100);
+            light.position.set(10, 10, 10);
+            scene.add(light);
+            camera.position.z = 3;
+
+            function animate3D() {
+                requestAnimationFrame(animate3D);
+                beam.rotation.y += 0.01;
+                renderer.render(scene, camera);
+            }
+            animate3D();
+        }
+
+        function update3DBeam(w, h) {
+            beam.scale.set(1, h/10, w/10);
+        }
+
+        // --- 7. Real-time Chat Simulation ---
+        const chatInput = document.getElementById('chat-input');
+        chatInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') {
+                const win = document.getElementById('chat-window');
+                win.innerHTML += `<div><b>${currentUser.name}:</b> ${chatInput.value}</div>`;
+                chatInput.value = "";
+                win.scrollTop = win.scrollHeight;
+            }
+        });
+
+    </script>
+</body>
+</html>
